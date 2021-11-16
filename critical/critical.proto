@@ -8,7 +8,7 @@ option go_package = "https://github.com/Troelshjarne/criticalSection;criticalpac
    the node attach its lamport time and node id.
 */ 
 message request {
-    int32 nodeId = 1;
+    int64 nodeId = 1;
  }
  
 
@@ -27,13 +27,8 @@ message ack {
 }
 
 
-message Channel {
-   string nodeId = 1;
-}
-
-
  service Communication{
-    rpc joinCluster(Channel) returns (stream request) {}
+    rpc serverReply(reply) returns (stream request) {}
     
     rpc sendRequest (stream request) returns (ack) {}
  }
