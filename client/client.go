@@ -5,8 +5,10 @@ import (
 	"crypto/rand"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
+	"time"
 
 	criticalpackage "github.com/Troelshjarne/criticalSection/critical"
 
@@ -36,24 +38,53 @@ func main() {
 	ctx := context.Background()
 	client := criticalpackage.NewCommunicationClient(conn)
 
-	//go joinCluster
+	go serverReply(ctx, client)
+
+	for i := 0; i < 100; i++ {
+		fmt.Println("im alive")
+		time.Sleep(time.Second * 5)
+		go sendRequest(ctx, client, nodeID) //Fix ID sent with message
+
+	}
 
 }
 
 func serverReply(ctx context.Context, client criticalpackage.CommunicationClient) {
 
-	reply := criticalpackage.Reply{Access: *&nodeHasAccess}
+	//We need to use that the boolean is send with this call
+	reply := criticalpackage.Reply{Access: nodeHasAccess}
 
 	stream, err := client.ServerReply(ctx, &reply)
 	if err != nil {
 		log.Fatalf("Client reply connection error! Throws %v", err)
 	}
 
-	waitChannel := make(chan struct{})
+	waitChannel := make(chan struct{}) //Check if needed
+
+	go func() {
+
+		for {
+
+			incomingReply, err := stream.Recv()
+			if err == io.EOF {
+				close(waitChannel)
+				return
+			}
+			if err != nil {
+				log.Fatalf("Failed to recieve message from sent reply. Got error: %v \n", err)
+			}
+
+			logThis(incomingReply.NodeId)
+
+		}
+
+	}()
+
+	<-waitChannel
 
 }
 
-func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient) {
+func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient, nodeID int64) {
 
 	stream, err := client.SendRequest(ctx)
 
@@ -62,11 +93,17 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	}
 
 	rq := criticalpackage.Request{
-		NodeId: nodeID,
+		NodeId: nodeID, //Should be a pointer to the id
 	}
 	stream.Send(&rq)
 
 	ack, err := stream.CloseAndRecv()
-	fmt.Println("Sent ID to server: %v \n", ack)
+	fmt.Println("Sent ID to server. Acknowledge = %v \n", ack)
 
+}
+
+func logThis(reply int64) {
+	if nodeHasAccess {
+		log.Println("Access = %v", reply)
+	}
 }

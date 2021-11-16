@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CommunicationClient interface {
-	ServerReply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Communication_ServerReplyClient, error)
+	ServerReply(ctx context.Context, in *Reply, opts ...grpc.CallOption) (Communication_ServerReplyClient, error)
 	SendRequest(ctx context.Context, opts ...grpc.CallOption) (Communication_SendRequestClient, error)
 }
 
@@ -30,7 +30,7 @@ func NewCommunicationClient(cc grpc.ClientConnInterface) CommunicationClient {
 	return &communicationClient{cc}
 }
 
-func (c *communicationClient) ServerReply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Communication_ServerReplyClient, error) {
+func (c *communicationClient) ServerReply(ctx context.Context, in *Reply, opts ...grpc.CallOption) (Communication_ServerReplyClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Communication_ServiceDesc.Streams[0], "/criticalpackage.Communication/serverReply", opts...)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (x *communicationSendRequestClient) CloseAndRecv() (*Ack, error) {
 // All implementations must embed UnimplementedCommunicationServer
 // for forward compatibility
 type CommunicationServer interface {
-	ServerReply(*Channel, Communication_ServerReplyServer) error
+	ServerReply(*Reply, Communication_ServerReplyServer) error
 	SendRequest(Communication_SendRequestServer) error
 	mustEmbedUnimplementedCommunicationServer()
 }
@@ -109,7 +109,7 @@ type CommunicationServer interface {
 type UnimplementedCommunicationServer struct {
 }
 
-func (UnimplementedCommunicationServer) ServerReply(*Channel, Communication_ServerReplyServer) error {
+func (UnimplementedCommunicationServer) ServerReply(*Reply, Communication_ServerReplyServer) error {
 	return status.Errorf(codes.Unimplemented, "method ServerReply not implemented")
 }
 func (UnimplementedCommunicationServer) SendRequest(Communication_SendRequestServer) error {
@@ -129,7 +129,7 @@ func RegisterCommunicationServer(s grpc.ServiceRegistrar, srv CommunicationServe
 }
 
 func _Communication_ServerReply_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Channel)
+	m := new(Reply)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
