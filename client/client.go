@@ -32,7 +32,7 @@ func main() {
 	defer conn.Close()
 
 	ctx := context.Background()
-	client := criticalpackage.NewCommunicationClient()
+	client := criticalpackage.NewCommunicationClient(conn)
 
 	//go joinCluster
 
@@ -40,16 +40,14 @@ func main() {
 
 func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient) {
 
-	stream, err := client.sendRequest(ctx)
+	stream, err := client.SendRequest(ctx)
 
 	if err != nil {
 		log.Printf("Failure sending request. Got this error: %v", err)
 	}
 
 	rq := criticalpackage.Request{
-		Request: &criticalpackage.Request{
-			NodeId: nodeID,
-		},
+		NodeId: nodeID,
 	}
 	stream.Send(&rq)
 
