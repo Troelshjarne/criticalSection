@@ -27,13 +27,8 @@ message ack {
 }
 
 
-message Channel {
-   string nodeId = 1;
-}
-
-
  service Communication{
-    rpc serverReply(Channel) returns (stream request) {}
+    rpc serverReply(reply) returns (stream request) {}
     
     rpc sendRequest (stream request) returns (ack) {}
  }
