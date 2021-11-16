@@ -1,4 +1,4 @@
-module Troelshjarne/criticalSection
+module Troelshjarne/criticalSection/critical
 
 go 1.17
 

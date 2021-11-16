@@ -7,7 +7,7 @@ import (
 	"log"
 	"net"
 
-	criticalpackage "/Troelshjarne/criticalSection/critical"
+	criticalpackage "github.com/Troelshjarne/criticalSection/critical"
 
 	"google.golang.org/grpc"
 )
