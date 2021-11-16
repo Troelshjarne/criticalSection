@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package criticalpackage;
+option go_package = "https://github.com/Troelshjarne/Exercise_2;criticalpackage";
+
+
+/* node sends request for entering the critical section.
+   the node attach its lamport time and node id.
+*/ 
+message request {
+    int32 nodeId = 1;
+ }
+ 
+
+ /*
+  a node sends a reply - accepting the request
+ */
+ message reply {
+    bool access =  1;
+ }
+
+ /*
+ acknowledge for sending a request  
+ */
+message ack {
+  string status = 1;
+}
+
+
+message Channel {
+   string nodeId = 1;
+}
+
+
+ service Communication{
+    rpc joinCluster(Channel) returns (stream request) {}
+    
+    rpc sendRequest (stream request) returns (ack) {}
+ }
