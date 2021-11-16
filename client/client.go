@@ -18,6 +18,8 @@ var tcpServer = flag.String("server", ":5050", "TCP Server")
 var idGenerator, _ = rand.Int(rand.Reader, big.NewInt(10000000))
 var nodeID = idGenerator.Int64()
 
+var nodeHasAccess = false
+
 func main() {
 	fmt.Println("test")
 
@@ -38,6 +40,19 @@ func main() {
 
 }
 
+func serverReply(ctx context.Context, client criticalpackage.CommunicationClient) {
+
+	reply := criticalpackage.Reply{Access: *&nodeHasAccess}
+
+	stream, err := client.ServerReply(ctx, &reply)
+	if err != nil {
+		log.Fatalf("Client reply connection error! Throws %v", err)
+	}
+
+	waitChannel := make(chan struct{})
+
+}
+
 func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient) {
 
 	stream, err := client.SendRequest(ctx)
@@ -53,9 +68,5 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 
 	ack, err := stream.CloseAndRecv()
 	fmt.Println("Sent ID to server: %v \n", ack)
-
-}
-
-func sendReply() {
 
 }
