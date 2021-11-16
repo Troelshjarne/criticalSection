@@ -15,7 +15,7 @@ import (
 )
 
 //Flag to set which IP address to connect to
-var tcpServer = flag.String("server", ":5050", "TCP Server")
+var tcpServer = flag.String("server", ":9080", "TCP Server")
 
 //Random generator for unique IDs
 var idGenerator, _ = rand.Int(rand.Reader, big.NewInt(10000000))
@@ -34,6 +34,7 @@ func main() {
 
 	//Accessing the TCP with the flag from command line initiation
 	conn, err := grpc.Dial(*tcpServer, options...)
+
 	if err != nil {
 		log.Fatalf("Failed to dial %v", err)
 	}
@@ -48,7 +49,7 @@ func main() {
 	client := criticalpackage.NewCommunicationClient(conn)
 
 	//TO DO: Set up this function correctly
-	go serverReply(ctx, client)
+	go serverReply(client, &criticalpackage.Request{NodeId: nodeID})
 
 	//Every x seconds (at a random interval) a client should try to access the critical section
 	//Requests are sent here
@@ -60,18 +61,39 @@ func main() {
 
 }
 
+//UPDATE: This function does not stream anymore, but simply responds to messages sent.
+//The big block of commented out text/code below can be deleted if we do not need streaming
+//of this function anymore.
+func serverReply(client criticalpackage.CommunicationClient, nodeID *criticalpackage.Request) {
+
+	//This code should be enough, but the serverside functionality is not built in yet.
+	log.Printf("Getting access status for ID: %v", nodeID)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	access, err := client.ServerReply(ctx, nodeID)
+	if err != nil {
+		log.Fatalf("Something bad happened with client %v getting error: %v", nodeID, err)
+	}
+	log.Printf("Node with ID: %v, has access status = %v \n", nodeID, access)
+
+}
+
+//
+//
+//
+//
 //This function should read from a stream, waiting for the server to reply with access granted or denied
-func serverReply(ctx context.Context, client criticalpackage.CommunicationClient) {
 
-	//If the client receives a boolean that is false, it is not granted access
-	//If the client receives a boolean that is true, it is granted access
+//If the client receives a boolean that is false, it is not granted access
+//If the client receives a boolean that is true, it is granted access
 
-	//The current problem with this function and how it is set up, is that it sends the same
-	//message to all clients at once. It is a stream that all clients read from. Therefore it
-	//is not possible with the current setup to send access to a specific client.
-	//We need this function to send/give access to a specific client.
+//The current problem with this function and how it is set up, is that it sends the same
+//message to all clients at once. It is a stream that all clients read from. Therefore it
+//is not possible with the current setup to send access to a specific client.
+//We need this function to send/give access to a specific client.
 
-	/* 	stream, err := client.ServerReply(ctx, &reply)
+/* 	stream, err := client.ServerReply(ctx, &reply)
 	   	if err != nil {
 	   		log.Fatalf("Client reply connection error! Throws %v", err)
 	   	}
@@ -97,9 +119,9 @@ func serverReply(ctx context.Context, client criticalpackage.CommunicationClient
 
 	   	}()
 
-	   	<-waitChannel */
+	   	<-waitChannel
 
-}
+}  */
 
 //This function sends a request to the server, to grant access to the critical section.
 //The request is simply its ID. The ID should be received by the server and put in the queue
@@ -122,7 +144,7 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 
 	//When a message is sent to the server, a client recieves an acknowledgement.
 	ack, err := stream.CloseAndRecv()
-	fmt.Println("Sent ID to server. Acknowledge = %v \n", ack)
+	fmt.Printf("Sent ID to server. Acknowledge = %v \n", ack)
 
 }
 

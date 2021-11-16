@@ -21,7 +21,7 @@ var nodeID = 0
 var nodes = 0
 
 // Queue of clients
-var queue []string
+var queue []int64
 var queueMutex sync.Mutex
 
 type Server struct {
@@ -30,7 +30,7 @@ type Server struct {
 	channel map[string][]chan *criticalpackage.Request
 }
 
-func (s *Server) RequestAccess(clientID string) {
+func (s *Server) RequestAccess(clientID int64) {
 	queueMutex.Lock()
 	queue = append(queue, clientID)
 	lamTime++
@@ -55,7 +55,7 @@ func (s *Server) serveQueue() {
 		// TODO: Log "{client} has exited critical section at lamport time {lam}."
 		queueMutex.Unlock()
 	} else {
-		time.Sleep(time.Millisecond*50)
+		time.Sleep(time.Millisecond * 50)
 	}
 }
 
