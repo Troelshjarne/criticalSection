@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package criticalpackage;
-option go_package = "https://github.com/Troelshjarne/Exercise_2;criticalpackage";
+option go_package = "https://github.com/Troelshjarne/criticalSection;criticalpackage";
 
 
 /* node sends request for entering the critical section.
