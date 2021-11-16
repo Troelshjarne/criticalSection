@@ -27,8 +27,9 @@ message ack {
 }
 
 
- service Communication{
-    rpc serverReply(reply) returns (stream request) {}
-    
-    rpc sendRequest (stream request) returns (ack) {}
- }
+//May need change to "serverReply" according to how we are going to implement the communication
+service Communication{
+   rpc serverReply(reply) returns (stream request) {}
+   
+   rpc sendRequest (stream request) returns (ack) {}
+}

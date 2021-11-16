@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"math/big"
 	"time"
@@ -15,93 +14,119 @@ import (
 	"google.golang.org/grpc"
 )
 
+//Flag to set which IP address to connect to
 var tcpServer = flag.String("server", ":5050", "TCP Server")
 
+//Random generator for unique IDs
 var idGenerator, _ = rand.Int(rand.Reader, big.NewInt(10000000))
 var nodeID = idGenerator.Int64()
 
+//Global variable to see if client/node has access to critical section
 var nodeHasAccess = false
 
 func main() {
-	fmt.Println("test")
 
+	fmt.Println("Client connecting to the server!")
+
+	//Starting TCP connection with options.
 	var options []grpc.DialOption
 	options = append(options, grpc.WithBlock(), grpc.WithInsecure())
 
+	//Accessing the TCP with the flag from command line initiation
 	conn, err := grpc.Dial(*tcpServer, options...)
 	if err != nil {
 		log.Fatalf("Failed to dial %v", err)
 	}
 
+	//When the client is closed, the connection is closed as well.
 	defer conn.Close()
 
+	//Global variable to share state
 	ctx := context.Background()
+
+	//Makes communication possible from client
 	client := criticalpackage.NewCommunicationClient(conn)
 
+	//TO DO: Set up this function correctly
 	go serverReply(ctx, client)
 
-	for i := 0; i < 100; i++ {
+	//Every x seconds (at a random interval) a client should try to access the critical section
+	//Requests are sent here
+	for {
 		fmt.Println("im alive")
 		time.Sleep(time.Second * 5)
 		go sendRequest(ctx, client, nodeID) //Fix ID sent with message
-
 	}
 
 }
 
+//This function should read from a stream, waiting for the server to reply with access granted or denied
 func serverReply(ctx context.Context, client criticalpackage.CommunicationClient) {
 
-	//We need to use that the boolean is send with this call
-	reply := criticalpackage.Reply{Access: nodeHasAccess}
+	//If the client receives a boolean that is false, it is not granted access
+	//If the client receives a boolean that is true, it is granted access
 
-	stream, err := client.ServerReply(ctx, &reply)
-	if err != nil {
-		log.Fatalf("Client reply connection error! Throws %v", err)
-	}
+	//The current problem with this function and how it is set up, is that it sends the same
+	//message to all clients at once. It is a stream that all clients read from. Therefore it
+	//is not possible with the current setup to send access to a specific client.
+	//We need this function to send/give access to a specific client.
 
-	waitChannel := make(chan struct{}) //Check if needed
+	/* 	stream, err := client.ServerReply(ctx, &reply)
+	   	if err != nil {
+	   		log.Fatalf("Client reply connection error! Throws %v", err)
+	   	}
 
-	go func() {
+	   	waitChannel := make(chan struct{}) //Check if needed
 
-		for {
+	   	go func() {
 
-			incomingReply, err := stream.Recv()
-			if err == io.EOF {
-				close(waitChannel)
-				return
-			}
-			if err != nil {
-				log.Fatalf("Failed to recieve message from sent reply. Got error: %v \n", err)
-			}
+	   		for {
 
-			logThis(incomingReply.NodeId)
+	   			incomingReply, err := stream.Recv()
+	   			if err == io.EOF {
+	   				close(waitChannel)
+	   				return
+	   			}
+	   			if err != nil {
+	   				log.Fatalf("Failed to recieve message from sent reply. Got error: %v \n", err)
+	   			}
 
-		}
+	   			logThis(incomingReply.NodeId)
 
-	}()
+	   		}
 
-	<-waitChannel
+	   	}()
+
+	   	<-waitChannel */
 
 }
 
+//This function sends a request to the server, to grant access to the critical section.
+//The request is simply its ID. The ID should be received by the server and put in the queue
+//of clients waiting for critical section access.
 func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient, nodeID int64) {
 
+	//Stream for listening to client requests
 	stream, err := client.SendRequest(ctx)
 
 	if err != nil {
 		log.Printf("Failure sending request. Got this error: %v", err)
 	}
 
+	//The request is only the clients ID.
 	rq := criticalpackage.Request{
-		NodeId: nodeID, //Should be a pointer to the id
+		NodeId: nodeID, //Should be a pointer to the id?
 	}
+	//Send the request to the server
 	stream.Send(&rq)
 
+	//When a message is sent to the server, a client recieves an acknowledgement.
 	ack, err := stream.CloseAndRecv()
 	fmt.Println("Sent ID to server. Acknowledge = %v \n", ack)
 
 }
 
+//For testing. Can be deleted
 func logThis(reply int64) {
 	if nodeHasAccess {
 		log.Println("Access = %v", reply)
