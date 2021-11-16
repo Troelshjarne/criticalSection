@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"log"
 	"net"
 
@@ -28,7 +26,7 @@ type Server struct {
 
 func main() {
 
-	fmt.Println("=== Node starting up ===")
+	fmt.Println("=== Server starting up ===")
 	list, err := net.Listen("tcp", ":9080")
 
 	if err != nil {
@@ -42,36 +40,4 @@ func main() {
 		channel: make(map[string][]chan *criticalpackage.Request),
 	})
 	grpcServer.Serve(list)
-}
-
-func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient) {
-
-	channel := criticalpackage.Channel{NodeId: "2"}
-
-	stream, err := client.SendRequest(ctx, &channel)
-
-	if err != nil {
-		log.Fatalf("Client join channel error! Throws %v", err)
-	}
-
-	go func() {
-
-		for {
-
-			in, err := stream.RecvMsg()
-			if err == io.EOF {
-				close(waitChannel)
-				return
-			}
-			if err != nil {
-				log.Fatalf("Failed to recieve message from channel joining. \n Got error: %v", err)
-			}
-
-			if *senderName != in.ParticipantID {
-
-				log.Printf("Time: (%v) Message: (%v) -> %v \n", in.LamTime, in.ParticipantID, in.Message)
-			}
-
-		}
-	}()
 }
