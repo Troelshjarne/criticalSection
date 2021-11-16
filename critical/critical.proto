@@ -8,7 +8,7 @@ option go_package = "https://github.com/Troelshjarne/criticalSection;criticalpac
    the node attach its lamport time and node id.
 */ 
 message request {
-    int32 nodeId = 1;
+    int64 nodeId = 1;
  }
  
 
