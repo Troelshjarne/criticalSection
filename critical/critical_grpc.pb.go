@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CommunicationClient interface {
-	JoinCluster(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Communication_JoinClusterClient, error)
+	ServerReply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Communication_ServerReplyClient, error)
 	SendRequest(ctx context.Context, opts ...grpc.CallOption) (Communication_SendRequestClient, error)
 }
 
@@ -30,12 +30,12 @@ func NewCommunicationClient(cc grpc.ClientConnInterface) CommunicationClient {
 	return &communicationClient{cc}
 }
 
-func (c *communicationClient) JoinCluster(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Communication_JoinClusterClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Communication_ServiceDesc.Streams[0], "/criticalpackage.Communication/joinCluster", opts...)
+func (c *communicationClient) ServerReply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Communication_ServerReplyClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Communication_ServiceDesc.Streams[0], "/criticalpackage.Communication/serverReply", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &communicationJoinClusterClient{stream}
+	x := &communicationServerReplyClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -45,16 +45,16 @@ func (c *communicationClient) JoinCluster(ctx context.Context, in *Channel, opts
 	return x, nil
 }
 
-type Communication_JoinClusterClient interface {
+type Communication_ServerReplyClient interface {
 	Recv() (*Request, error)
 	grpc.ClientStream
 }
 
-type communicationJoinClusterClient struct {
+type communicationServerReplyClient struct {
 	grpc.ClientStream
 }
 
-func (x *communicationJoinClusterClient) Recv() (*Request, error) {
+func (x *communicationServerReplyClient) Recv() (*Request, error) {
 	m := new(Request)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (x *communicationSendRequestClient) CloseAndRecv() (*Ack, error) {
 // All implementations must embed UnimplementedCommunicationServer
 // for forward compatibility
 type CommunicationServer interface {
-	JoinCluster(*Channel, Communication_JoinClusterServer) error
+	ServerReply(*Channel, Communication_ServerReplyServer) error
 	SendRequest(Communication_SendRequestServer) error
 	mustEmbedUnimplementedCommunicationServer()
 }
@@ -109,8 +109,8 @@ type CommunicationServer interface {
 type UnimplementedCommunicationServer struct {
 }
 
-func (UnimplementedCommunicationServer) JoinCluster(*Channel, Communication_JoinClusterServer) error {
-	return status.Errorf(codes.Unimplemented, "method JoinCluster not implemented")
+func (UnimplementedCommunicationServer) ServerReply(*Channel, Communication_ServerReplyServer) error {
+	return status.Errorf(codes.Unimplemented, "method ServerReply not implemented")
 }
 func (UnimplementedCommunicationServer) SendRequest(Communication_SendRequestServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendRequest not implemented")
@@ -128,24 +128,24 @@ func RegisterCommunicationServer(s grpc.ServiceRegistrar, srv CommunicationServe
 	s.RegisterService(&Communication_ServiceDesc, srv)
 }
 
-func _Communication_JoinCluster_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _Communication_ServerReply_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(Channel)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(CommunicationServer).JoinCluster(m, &communicationJoinClusterServer{stream})
+	return srv.(CommunicationServer).ServerReply(m, &communicationServerReplyServer{stream})
 }
 
-type Communication_JoinClusterServer interface {
+type Communication_ServerReplyServer interface {
 	Send(*Request) error
 	grpc.ServerStream
 }
 
-type communicationJoinClusterServer struct {
+type communicationServerReplyServer struct {
 	grpc.ServerStream
 }
 
-func (x *communicationJoinClusterServer) Send(m *Request) error {
+func (x *communicationServerReplyServer) Send(m *Request) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -184,8 +184,8 @@ var Communication_ServiceDesc = grpc.ServiceDesc{
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "joinCluster",
-			Handler:       _Communication_JoinCluster_Handler,
+			StreamName:    "serverReply",
+			Handler:       _Communication_ServerReply_Handler,
 			ServerStreams: true,
 		},
 		{
