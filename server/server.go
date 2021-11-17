@@ -41,11 +41,13 @@ func Log(text string) {
 
 // server reads reads node request and grant acces or put into queue
 func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendRequestServer) error {
-	fmt.Println("Request acces function")
-	request, err := requestStream.Recv()
 
-	fmt.Println(request, "nodeID")
-	fmt.Println(err)
+	request, err := requestStream.Recv()
+	if err != nil {
+		log.Printf("Request error: %v \n", err)
+	}
+
+	fmt.Printf("This is the request: %v \n", request)
 
 	go func() {
 
@@ -65,13 +67,13 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 		// sending reply requesting node.
 
 		nodeId, err := requestStream.Recv()
+		if err != nil {
+			log.Printf("Error getting nodeID from stream: %v \n", err)
+		}
 
 		// critical section not availa
 		// logic
-		fmt.Println("test")
-
-		fmt.Println(err)
-		fmt.Println(nodeId)
+		fmt.Printf("Current ID gotten is: %v \n", nodeId)
 
 		queueMutex.Lock()
 
@@ -82,7 +84,7 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 		Log(fmt.Sprintf("Client \"%s\" has requested access to the critical section and has been put in the back of the queue", "Bob"))
 		queueMutex.Unlock()
 
-		fmt.Println(nodeID)
+		fmt.Printf("printing node ID once more: %v \n", nodeID)
 	}()
 	return nil
 }
