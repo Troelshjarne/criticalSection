@@ -16,9 +16,6 @@ import (
 
 var lamTime = 0
 
-// increments each time a client joins the cluster
-var nodes = 0
-
 // Queue of clients
 var queue []int64
 var queueMutex sync.Mutex
@@ -38,6 +35,16 @@ func Log(text string) {
 
 // server reads reads node request and grant acces or put into queue
 func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendRequestServer) error {
+
+	//for k, v := range s.channel {
+
+	//}
+	// sending back acknowledgement
+	ack := criticalpackage.Ack{
+		Status: "in que",
+	}
+
+	requestStream.SendAndClose(&ack)
 
 	request, err := requestStream.Recv()
 	if err != nil {
