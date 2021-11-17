@@ -90,23 +90,25 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 // Run in own goroutine.
 // Checks intermittently, whether there is a client in queue, and serves them if possible.
 func (s *Server) serveQueue() {
-	if len(queue) > 0 {
-		lamTime++
-		// Some client is in critical section, if code is in his block.
-		// TODO: Send permission for client to enter critical section.
+	for {
+		if len(queue) > 0 {
+			lamTime++
+			// Some client is in critical section, if code is in his block.
+			// TODO: Send permission for client to enter critical section.
 
-		// TODO: Format client name properly
-		Log(fmt.Sprintf("Client \"%s\" has entered the critical section", "Bob"))
-		// TODO: Wait here, until client gives up access.
+			// TODO: Format client name properly
+			Log(fmt.Sprintf("Client \"%s\" has entered the critical section", "Bob"))
+			// TODO: Wait here, until client gives up access.
 
-		queueMutex.Lock()
-		lamTime++
-		queue = queue[1:]
-		// TODO: Format client name properly
-		Log(fmt.Sprintf("Client \"%s\" has exited the critical section", "Bob"))
-		queueMutex.Unlock()
-	} else {
-		time.Sleep(time.Millisecond * 50)
+			queueMutex.Lock()
+			lamTime++
+			queue = queue[1:]
+			// TODO: Format client name properly
+			Log(fmt.Sprintf("Client \"%s\" has exited the critical section", "Bob"))
+			queueMutex.Unlock()
+		} else {
+			time.Sleep(time.Millisecond * 50)
+		}
 	}
 }
 
