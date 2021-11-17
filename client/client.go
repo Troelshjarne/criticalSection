@@ -49,7 +49,7 @@ func main() {
 	client := criticalpackage.NewCommunicationClient(conn)
 
 	//TO DO: Set up this function correctly
-	go serverReply(client, &criticalpackage.Request{NodeId: nodeID})
+	go serverReply(client, ctx)
 
 	//Every x seconds (at a random interval) a client should try to access the critical section
 	//Requests are sent here
@@ -65,7 +65,7 @@ func main() {
 //UPDATE: This function does not stream anymore, but simply responds to messages sent.
 //The big block of commented out text/code below can be deleted if we do not need streaming
 //of this function anymore.
-func serverReply(client criticalpackage.CommunicationClient, nodeID *criticalpackage.Request, ctx context.Context) {
+func serverReply(client criticalpackage.CommunicationClient, ctx context.Context) {
 
 	request := criticalpackage.Request{
 		NodeId: 0,
@@ -89,14 +89,14 @@ func serverReply(client criticalpackage.CommunicationClient, nodeID *criticalpac
 
 	//This code should be enough, but the serverside functionality is not built in yet.
 	log.Printf("Getting access status for ID: %v", nodeID)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
 
-	access, err := client.ServerReply(ctx, nodeID)
+	//access, err := client.ServerReply(ctx, nodeID)
 	if err != nil {
 		log.Fatalf("Something bad happened with client %v getting error: %v", nodeID, err)
 	}
-	log.Printf("Node with ID: %v, has access status = %v \n", nodeID, access)
+	//log.Printf("Node with ID: %v, has access status = %v \n", nodeID, access)
 
 }
 
