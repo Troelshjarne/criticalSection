@@ -61,10 +61,31 @@ func main() {
 
 }
 
+//replyStream criticalpackage.Communication_SendRequestServer,
 //UPDATE: This function does not stream anymore, but simply responds to messages sent.
 //The big block of commented out text/code below can be deleted if we do not need streaming
 //of this function anymore.
-func serverReply(client criticalpackage.CommunicationClient, nodeID *criticalpackage.Request) {
+func serverReply(client criticalpackage.CommunicationClient, nodeID *criticalpackage.Request, ctx context.Context) {
+
+	request := criticalpackage.Request{
+		NodeId: 0,
+	}
+
+	// counter intuitive but do to our proto setup, we need to give a request before we can get a stream - &request
+	replyStream, err := client.ServerReply(ctx, &request)
+
+	go func() {
+
+		for {
+			reply, err := replyStream.Recv()
+			// give access
+			nodeHasAccess = reply.Access
+
+			fmt.Println(reply)
+			fmt.Println(err)
+		}
+
+	}()
 
 	//This code should be enough, but the serverside functionality is not built in yet.
 	log.Printf("Getting access status for ID: %v", nodeID)
@@ -128,7 +149,7 @@ func serverReply(client criticalpackage.CommunicationClient, nodeID *criticalpac
 //of clients waiting for critical section access.
 func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient, nodeID int64) {
 
-	//Stream for listening to client requests
+	//Stream for sending requests to server
 	stream, err := client.SendRequest(ctx)
 
 	if err != nil {
@@ -136,14 +157,17 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	}
 
 	//The request is only the clients ID.
-	rq := criticalpackage.Request{
+	request := criticalpackage.Request{
 		NodeId: nodeID, //Should be a pointer to the id?
 	}
 	//Send the request to the server
-	stream.Send(&rq)
+	stream.Send(&request)
 
 	//When a message is sent to the server, a client recieves an acknowledgement.
 	ack, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Printf("oh no problems")
+	}
 	fmt.Printf("Sent ID to server. Acknowledge = %v \n", ack)
 
 }

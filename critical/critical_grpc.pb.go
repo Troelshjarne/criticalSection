@@ -18,7 +18,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CommunicationClient interface {
-	ServerReply(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
+	//UPDATE: This has now been changed to a single RPC call (with no streaming), that is simply called
+	//with an ID and have a boolean returned.
+	ServerReply(ctx context.Context, in *Request, opts ...grpc.CallOption) (Communication_ServerReplyClient, error)
 	SendRequest(ctx context.Context, opts ...grpc.CallOption) (Communication_SendRequestClient, error)
 }
 
@@ -30,17 +32,40 @@ func NewCommunicationClient(cc grpc.ClientConnInterface) CommunicationClient {
 	return &communicationClient{cc}
 }
 
-func (c *communicationClient) ServerReply(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error) {
-	out := new(Reply)
-	err := c.cc.Invoke(ctx, "/criticalpackage.Communication/serverReply", in, out, opts...)
+func (c *communicationClient) ServerReply(ctx context.Context, in *Request, opts ...grpc.CallOption) (Communication_ServerReplyClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Communication_ServiceDesc.Streams[0], "/criticalpackage.Communication/serverReply", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &communicationServerReplyClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Communication_ServerReplyClient interface {
+	Recv() (*Reply, error)
+	grpc.ClientStream
+}
+
+type communicationServerReplyClient struct {
+	grpc.ClientStream
+}
+
+func (x *communicationServerReplyClient) Recv() (*Reply, error) {
+	m := new(Reply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *communicationClient) SendRequest(ctx context.Context, opts ...grpc.CallOption) (Communication_SendRequestClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Communication_ServiceDesc.Streams[0], "/criticalpackage.Communication/sendRequest", opts...)
+	stream, err := c.cc.NewStream(ctx, &Communication_ServiceDesc.Streams[1], "/criticalpackage.Communication/sendRequest", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +102,9 @@ func (x *communicationSendRequestClient) CloseAndRecv() (*Ack, error) {
 // All implementations must embed UnimplementedCommunicationServer
 // for forward compatibility
 type CommunicationServer interface {
-	ServerReply(context.Context, *Request) (*Reply, error)
+	//UPDATE: This has now been changed to a single RPC call (with no streaming), that is simply called
+	//with an ID and have a boolean returned.
+	ServerReply(*Request, Communication_ServerReplyServer) error
 	SendRequest(Communication_SendRequestServer) error
 	mustEmbedUnimplementedCommunicationServer()
 }
@@ -86,8 +113,8 @@ type CommunicationServer interface {
 type UnimplementedCommunicationServer struct {
 }
 
-func (UnimplementedCommunicationServer) ServerReply(context.Context, *Request) (*Reply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ServerReply not implemented")
+func (UnimplementedCommunicationServer) ServerReply(*Request, Communication_ServerReplyServer) error {
+	return status.Errorf(codes.Unimplemented, "method ServerReply not implemented")
 }
 func (UnimplementedCommunicationServer) SendRequest(Communication_SendRequestServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendRequest not implemented")
@@ -105,22 +132,25 @@ func RegisterCommunicationServer(s grpc.ServiceRegistrar, srv CommunicationServe
 	s.RegisterService(&Communication_ServiceDesc, srv)
 }
 
-func _Communication_ServerReply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Request)
-	if err := dec(in); err != nil {
-		return nil, err
+func _Communication_ServerReply_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Request)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(CommunicationServer).ServerReply(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/criticalpackage.Communication/serverReply",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommunicationServer).ServerReply(ctx, req.(*Request))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(CommunicationServer).ServerReply(m, &communicationServerReplyServer{stream})
+}
+
+type Communication_ServerReplyServer interface {
+	Send(*Reply) error
+	grpc.ServerStream
+}
+
+type communicationServerReplyServer struct {
+	grpc.ServerStream
+}
+
+func (x *communicationServerReplyServer) Send(m *Reply) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _Communication_SendRequest_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -155,13 +185,13 @@ func (x *communicationSendRequestServer) Recv() (*Request, error) {
 var Communication_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "criticalpackage.Communication",
 	HandlerType: (*CommunicationServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "serverReply",
-			Handler:    _Communication_ServerReply_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "serverReply",
+			Handler:       _Communication_ServerReply_Handler,
+			ServerStreams: true,
+		},
 		{
 			StreamName:    "sendRequest",
 			Handler:       _Communication_SendRequest_Handler,

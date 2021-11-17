@@ -33,6 +33,6 @@ service Communication{
 
    //UPDATE: This has now been changed to a single RPC call (with no streaming), that is simply called
    //with an ID and have a boolean returned.
-   rpc serverReply(request) returns (reply) {}
+   rpc serverReply(request) returns (stream reply) {}
    rpc sendRequest (stream request) returns (ack) {}
 }

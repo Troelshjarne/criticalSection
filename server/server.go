@@ -40,7 +40,7 @@ func RequestAccess(s *Server, requestStream criticalpackage.Communication_SendRe
 			reply := criticalpackage.Reply{
 				Access: true,
 			}
-			//need fix should only find channel for belonging to the requeting node
+			//reads request from all channels (if there is one...)
 			for _, replyChan := range streams {
 				// sending reply to node requesting node.
 				replyChan <- &reply
