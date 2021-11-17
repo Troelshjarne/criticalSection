@@ -46,7 +46,7 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 	queueMutex.Lock()
 	queue = append(queue, nodeID)
 	lamTime++
-	// TODO: Format client name properly
+
 	Log(fmt.Sprintf("Client \"%v\" has requested access to the critical section and has been put in the back of the queue", nodeID))
 	queueMutex.Unlock()
 
@@ -55,14 +55,13 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 			if queue[0] == nodeID {
 				lamTime++
 				// Some client is in critical section, if code is in his block.
-				// TODO: Send permission for client to enter critical section.
+
 				authchannel <- nil
 
 				Log(fmt.Sprintf("Client \"%v\" has entered the critical section", nodeID))
-				// TODO: Wait here, until client gives up access.
 
 				// Simulate being in critical section, and exiting it again.
-				time.Sleep(5*time.Second)
+				time.Sleep(5 * time.Second)
 
 				queueMutex.Lock()
 				lamTime++
@@ -76,42 +75,10 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 		}
 	}()
 
-	<- authchannel
+	<-authchannel
 
 	requestStream.SendAndClose(&criticalpackage.Ack{Status: "Granted"})
 
-
-	/*
-	//for k, v := range s.channel {
-
-	//}
-	// sending back acknowledgement
-	ack := criticalpackage.Ack{
-		Status: "in que",
-	}
-
-	requestStream.SendAndClose(&ack)
-
-
-	fmt.Printf("This is the request: %v \n", request)
-
-	go func() {
-		// critical section not availa
-		// logic
-		fmt.Printf("Current ID gotten is: %v \n", request)
-
-		queueMutex.Lock()
-
-		// convert nodeid int64 to int ???? or change protofile to int32, random ID generator thus need to be changed
-		queue = append(queue, request.NodeId)
-		lamTime++
-		// TODO: Format client name properly
-		Log(fmt.Sprintf("Client \"%s\" has requested access to the critical section and has been put in the back of the queue", "Bob"))
-		queueMutex.Unlock()
-
-		fmt.Printf("printing node ID once more: %v \n", request)
-		fmt.Printf("logging que %v \n", queue)
-	}()*/
 	return nil
 }
 
@@ -122,18 +89,16 @@ func (s *Server) serveQueue() {
 		if len(queue) > 0 {
 			lamTime++
 			// Some client is in critical section, if code is in his block.
-			// TODO: Send permission for client to enter critical section.
+
 			id := queue[0]
 			s.channel[id][0] <- nil
 
-			// TODO: Format client name properly
 			Log(fmt.Sprintf("Client \"%v\" has entered the critical section", id))
-			// TODO: Wait here, until client gives up access.
 
 			queueMutex.Lock()
 			lamTime++
 			queue = queue[1:]
-			// TODO: Format client name properly
+
 			Log(fmt.Sprintf("Client \"%v\" has exited the critical section", id))
 			queueMutex.Unlock()
 		} else {
