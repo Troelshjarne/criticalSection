@@ -56,7 +56,7 @@ func main() {
 	for {
 		fmt.Println("im alive")
 		time.Sleep(time.Second * 5)
-		go sendRequest(ctx, client, nodeID) //Fix ID sent with message
+		sendRequest(ctx, client, nodeID) //Fix ID sent with message
 	}
 
 }
@@ -175,4 +175,17 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 		log.Fatalf("Cant read")
 	}
 	fmt.Println(acc.Status)
+
+	if acc.Status == "Granted" {
+		nodeHasAccess = true
+
+		fmt.Println("Entering critical section")
+		// Simulate doing stuff with critical access
+		time.Sleep(5*time.Second)
+		fmt.Println("Exiting critical section")
+
+		nodeHasAccess = false
+	} else {
+		fmt.Printf("Denied access to critical section. Status recieved: %s", acc.Status)
+	}
 }
