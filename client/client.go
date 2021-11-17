@@ -157,6 +157,8 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	request := criticalpackage.Request{
 		NodeId: nodeID, //Should be a pointer to the id?
 	}
+
+	fmt.Println(request.NodeId, "test")
 	//Send the request to the server
 	stream.Send(&request)
 

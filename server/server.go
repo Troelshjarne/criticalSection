@@ -58,30 +58,21 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 			reqestChan <- &reply
 		}
 
-		// looking for requests in all streams
-
-		//reads request from all channels (if there is one...
-		// sending reply requesting node.
-
-		nodeId, err := requestStream.Recv()
-		if err != nil {
-			log.Printf("Error getting nodeID from stream: %v \n", err)
-		}
-
 		// critical section not availa
 		// logic
-		fmt.Printf("Current ID gotten is: %v \n", nodeId)
+		fmt.Printf("Current ID gotten is: %v \n", request)
 
 		queueMutex.Lock()
 
 		// convert nodeid int64 to int ???? or change protofile to int32, random ID generator thus need to be changed
-		//queue = append(queue, nodeId)
+		queue = append(queue, request.NodeId)
 		lamTime++
 		// TODO: Format client name properly
 		Log(fmt.Sprintf("Client \"%s\" has requested access to the critical section and has been put in the back of the queue", "Bob"))
 		queueMutex.Unlock()
 
-		fmt.Printf("printing node ID once more: %v \n", nodeId)
+		fmt.Printf("printing node ID once more: %v \n", request)
+		fmt.Printf("logging que %v \n", queue)
 	}()
 	return nil
 }
