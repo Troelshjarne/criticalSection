@@ -49,7 +49,7 @@ func main() {
 	client := criticalpackage.NewCommunicationClient(conn)
 
 	//TO DO: Set up this function correctly
-	go serverReply(client, ctx)
+	//go serverReply(client, ctx)
 
 	//Every x seconds (at a random interval) a client should try to access the critical section
 	//Requests are sent here
@@ -61,10 +61,7 @@ func main() {
 
 }
 
-//replyStream criticalpackage.Communication_SendRequestServer,
-//UPDATE: This function does not stream anymore, but simply responds to messages sent.
-//The big block of commented out text/code below can be deleted if we do not need streaming
-//of this function anymore.
+// reads reply from server reply stream.
 func serverReply(client criticalpackage.CommunicationClient, ctx context.Context) {
 
 	request := criticalpackage.Request{
@@ -170,11 +167,4 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	}
 	fmt.Printf("Sent ID to server. Acknowledge = %v \n", ack)
 
-}
-
-//For testing. Can be deleted
-func logThis(reply int64) {
-	if nodeHasAccess {
-		log.Println("Access = %v", reply)
-	}
 }
