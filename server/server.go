@@ -35,7 +35,24 @@ func Log(text string) {
 
 // server reads reads node request and grant acces or put into queue
 func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendRequestServer) error {
+	request, err := requestStream.Recv()
+	if err != nil {
+		log.Printf("Request error: %v \n", err)
+	}
 
+	msgchannel := make(chan *criticalpackage.Reply)
+	s.channel[request.NodeId] = append(s.channel[request.NodeId], msgchannel)
+
+
+	ack := criticalpackage.Ack{
+		Status: "in que",
+	}
+	requestStream.SendMsg(&ack)
+
+	requestStream.SendAndClose(&criticalpackage.Ack{Status: "Granted"})
+
+
+	/*
 	//for k, v := range s.channel {
 
 	//}
@@ -46,25 +63,10 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 
 	requestStream.SendAndClose(&ack)
 
-	request, err := requestStream.Recv()
-	if err != nil {
-		log.Printf("Request error: %v \n", err)
-	}
 
 	fmt.Printf("This is the request: %v \n", request)
 
 	go func() {
-
-		reply := criticalpackage.Reply{
-			Access: true,
-		}
-
-		streams := s.channel[request.NodeId]
-
-		for _, reqestChan := range streams {
-			reqestChan <- &reply
-		}
-
 		// critical section not availa
 		// logic
 		fmt.Printf("Current ID gotten is: %v \n", request)
@@ -80,7 +82,7 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 
 		fmt.Printf("printing node ID once more: %v \n", request)
 		fmt.Printf("logging que %v \n", queue)
-	}()
+	}()*/
 	return nil
 }
 

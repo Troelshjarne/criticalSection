@@ -71,6 +71,7 @@ func serverReply(client criticalpackage.CommunicationClient, ctx context.Context
 	// counter intuitive but do to our proto setup, we need to give a request before we can get a stream - &request
 	replyStream, err := client.ServerReply(ctx, &request)
 
+
 	go func() {
 
 		for {
@@ -169,4 +170,9 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	}
 	fmt.Printf("Sent ID to server. Acknowledge = %v \n", ack)
 
+	acc, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Cant read")
+	}
+	fmt.Println(acc.Status)
 }
