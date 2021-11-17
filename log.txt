@@ -1,2 +1,0 @@
-2021/11/17 20:30:01 Lamport Time 0 We test this function
-2021/11/17 20:30:01 Lamport Time 1 Does this work?

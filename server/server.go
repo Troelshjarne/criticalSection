@@ -100,7 +100,7 @@ func main() {
 	fmt.Println("=== Server starting up ===")
 	list, err := net.Listen("tcp", ":9080")
 
-	LOG_FILE := "./log.txt"
+	LOG_FILE := "./server.log"
 
 	logFile, err := os.OpenFile(LOG_FILE, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
@@ -115,6 +115,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen on port 9080: %v", err)
 	}
+	Log("Something")
 
 	var options []grpc.ServerOption
 	grpcServer := grpc.NewServer(options...)
