@@ -27,15 +27,43 @@ var queueMutex sync.Mutex
 type Server struct {
 	criticalpackage.UnimplementedCommunicationServer
 
-	channel map[string][]chan *criticalpackage.Request
+	channel map[string][]chan *criticalpackage.Reply
 }
 
-func (s *Server) RequestAccess(clientID int64) {
-	queueMutex.Lock()
-	queue = append(queue, clientID)
-	lamTime++
-	// TODO: Log "{Client} has requested access to the critical section at lamport time {Lam}."
-	queueMutex.Unlock()
+// server reads reads node request and grant acces or put into queue
+func RequestAccess(s *Server, requestStream criticalpackage.Communication_SendRequestServer) {
+
+	go func() {
+		// looking for requests in all streams
+		for _, streams := range s.channel {
+			// creating reply
+			reply := criticalpackage.Reply{
+				Access: true,
+			}
+			//need fix should only find channel for belonging to the requeting node
+			for _, replyChan := range streams {
+				// sending reply to node requesting node.
+				replyChan <- &reply
+
+				nodeId, err := requestStream.Recv()
+
+				fmt.Println(err)
+				fmt.Println(nodeId)
+
+				queueMutex.Lock()
+
+				// convert nodeid int64 to int ???? or change protofile to int32, random ID generator thus need to be changed
+				//queue = append(queue, nodeId)
+				lamTime++
+				// TODO: Log "{Client} has requested access to the critical section at lamport time {Lam}."
+				queueMutex.Unlock()
+
+				fmt.Println(nodeID)
+			}
+		}
+
+	}()
+
 }
 
 // Run in own goroutine.
@@ -72,7 +100,7 @@ func main() {
 	grpcServer := grpc.NewServer(options...)
 
 	criticalpackage.RegisterCommunicationServer(grpcServer, &Server{
-		channel: make(map[string][]chan *criticalpackage.Request),
+		channel: make(map[string][]chan *criticalpackage.Reply),
 	})
 	grpcServer.Serve(list)
 }
