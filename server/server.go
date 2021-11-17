@@ -58,7 +58,7 @@ func RequestAccess(s *Server, requestStream criticalpackage.Communication_SendRe
 
 				// critical section not availa
 				// logic
-
+				fmt.Println("test")
 				replyChan <- &reply
 
 				fmt.Println(err)
