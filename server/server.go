@@ -16,9 +16,6 @@ import (
 
 var lamTime = 0
 
-// set by flag ?
-var nodeID = 0
-
 // increments each time a client joins the cluster
 var nodes = 0
 
@@ -84,7 +81,7 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 		Log(fmt.Sprintf("Client \"%s\" has requested access to the critical section and has been put in the back of the queue", "Bob"))
 		queueMutex.Unlock()
 
-		fmt.Printf("printing node ID once more: %v \n", nodeID)
+		fmt.Printf("printing node ID once more: %v \n", nodeId)
 	}()
 	return nil
 }
