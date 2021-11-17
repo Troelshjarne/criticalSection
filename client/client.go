@@ -163,13 +163,13 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	//Send the request to the server
 	stream.Send(&request)
 
-	//When a message is sent to the server, a client recieves an acknowledgement.
+	/*//When a message is sent to the server, a client recieves an acknowledgement.
 	ack, err := stream.CloseAndRecv()
 	if err != nil {
 		log.Printf("oh no problems")
 	}
 	fmt.Printf("Sent ID to server. Acknowledge = %v \n", ack)
-
+*/
 	acc, err := stream.CloseAndRecv()
 	if err != nil {
 		log.Fatalf("Cant read")

@@ -39,15 +39,44 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 	if err != nil {
 		log.Printf("Request error: %v \n", err)
 	}
+	nodeID := request.NodeId
 
-	msgchannel := make(chan *criticalpackage.Reply)
-	s.channel[request.NodeId] = append(s.channel[request.NodeId], msgchannel)
+	authchannel := make(chan *criticalpackage.Reply)
 
+	queueMutex.Lock()
+	queue = append(queue, nodeID)
+	lamTime++
+	// TODO: Format client name properly
+	Log(fmt.Sprintf("Client \"%v\" has requested access to the critical section and has been put in the back of the queue", nodeID))
+	queueMutex.Unlock()
 
-	ack := criticalpackage.Ack{
-		Status: "in que",
-	}
-	requestStream.SendMsg(&ack)
+	go func() {
+		for {
+			if queue[0] == nodeID {
+				lamTime++
+				// Some client is in critical section, if code is in his block.
+				// TODO: Send permission for client to enter critical section.
+				authchannel <- nil
+
+				Log(fmt.Sprintf("Client \"%v\" has entered the critical section", nodeID))
+				// TODO: Wait here, until client gives up access.
+
+				// Simulate being in critical section, and exiting it again.
+				time.Sleep(5*time.Second)
+
+				queueMutex.Lock()
+				lamTime++
+				queue = queue[1:]
+				Log(fmt.Sprintf("Client \"%v\" has exited the critical section", nodeID))
+				queueMutex.Unlock()
+				break
+			} else {
+				time.Sleep(time.Millisecond * 50)
+			}
+		}
+	}()
+
+	<- authchannel
 
 	requestStream.SendAndClose(&criticalpackage.Ack{Status: "Granted"})
 
@@ -94,16 +123,18 @@ func (s *Server) serveQueue() {
 			lamTime++
 			// Some client is in critical section, if code is in his block.
 			// TODO: Send permission for client to enter critical section.
+			id := queue[0]
+			s.channel[id][0] <- nil
 
 			// TODO: Format client name properly
-			Log(fmt.Sprintf("Client \"%s\" has entered the critical section", "Bob"))
+			Log(fmt.Sprintf("Client \"%v\" has entered the critical section", id))
 			// TODO: Wait here, until client gives up access.
 
 			queueMutex.Lock()
 			lamTime++
 			queue = queue[1:]
 			// TODO: Format client name properly
-			Log(fmt.Sprintf("Client \"%s\" has exited the critical section", "Bob"))
+			Log(fmt.Sprintf("Client \"%v\" has exited the critical section", id))
 			queueMutex.Unlock()
 		} else {
 			time.Sleep(time.Millisecond * 50)
