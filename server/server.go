@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"os"
 	"sync"
 	"time"
 
@@ -28,6 +30,13 @@ type Server struct {
 	criticalpackage.UnimplementedCommunicationServer
 
 	channel map[string][]chan *criticalpackage.Reply
+}
+
+func LogSetup() {
+}
+
+func Log(text string) {
+	log.Printf("Lamport Time %d %s", lamTime, text)
 }
 
 // server reads reads node request and grant acces or put into queue
@@ -88,9 +97,20 @@ func (s *Server) serveQueue() {
 }
 
 func main() {
-
 	fmt.Println("=== Server starting up ===")
 	list, err := net.Listen("tcp", ":9080")
+
+	LOG_FILE := "./log.txt"
+
+	logFile, err := os.OpenFile(LOG_FILE, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer logFile.Close()
+
+	mw := io.MultiWriter(os.Stdout, logFile)
+
+	log.SetOutput(mw)
 
 	if err != nil {
 		log.Fatalf("Failed to listen on port 9080: %v", err)
