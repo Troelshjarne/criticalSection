@@ -64,7 +64,8 @@ func RequestAccess(s *Server, requestStream criticalpackage.Communication_SendRe
 				// convert nodeid int64 to int ???? or change protofile to int32, random ID generator thus need to be changed
 				//queue = append(queue, nodeId)
 				lamTime++
-				// TODO: Log "{Client} has requested access to the critical section at lamport time {Lam}."
+				// TODO: Format client name properly
+				Log(fmt.Sprintf("Client \"%s\" has requested access to the critical section and has been put in the back of the queue", "Bob"))
 				queueMutex.Unlock()
 
 				fmt.Println(nodeID)
@@ -83,13 +84,15 @@ func (s *Server) serveQueue() {
 		// Some client is in critical section, if code is in his block.
 		// TODO: Send permission for client to enter critical section.
 
-		// TODO: Log "{client} has entered critical section at lamport time {lam}."
+		// TODO: Format client name properly
+		Log(fmt.Sprintf("Client \"%s\" has entered the critical section", "Bob"))
 		// TODO: Wait here, until client gives up access.
 
 		queueMutex.Lock()
 		lamTime++
 		queue = queue[1:]
-		// TODO: Log "{client} has exited critical section at lamport time {lam}."
+		// TODO: Format client name properly
+		Log(fmt.Sprintf("Client \"%s\" has exited the critical section", "Bob"))
 		queueMutex.Unlock()
 	} else {
 		time.Sleep(time.Millisecond * 50)
@@ -115,7 +118,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen on port 9080: %v", err)
 	}
-	Log("Something")
 
 	var options []grpc.ServerOption
 	grpcServer := grpc.NewServer(options...)
