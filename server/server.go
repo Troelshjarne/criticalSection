@@ -29,7 +29,7 @@ var queueMutex sync.Mutex
 type Server struct {
 	criticalpackage.UnimplementedCommunicationServer
 
-	channel map[string][]chan *criticalpackage.Reply
+	channel map[int64][]chan *criticalpackage.Reply
 }
 
 func LogSetup() {
@@ -40,45 +40,51 @@ func Log(text string) {
 }
 
 // server reads reads node request and grant acces or put into queue
-func RequestAccess(s *Server, requestStream criticalpackage.Communication_SendRequestServer) {
+func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendRequestServer) error {
+	fmt.Println("Request acces function")
+	request, err := requestStream.Recv()
+
+	fmt.Println(request, "nodeID")
+	fmt.Println(err)
 
 	go func() {
-		// looking for requests in all streams
-		for _, streams := range s.channel {
-			// creating reply
-			reply := criticalpackage.Reply{
-				Access: true,
-				// nodeID
-			}
-			//reads request from all channels (if there is one...)
-			for _, replyChan := range streams {
-				// sending reply requesting node.
 
-				nodeId, err := requestStream.Recv()
-
-				// critical section not availa
-				// logic
-				fmt.Println("test")
-				replyChan <- &reply
-
-				fmt.Println(err)
-				fmt.Println(nodeId)
-
-				queueMutex.Lock()
-
-				// convert nodeid int64 to int ???? or change protofile to int32, random ID generator thus need to be changed
-				//queue = append(queue, nodeId)
-				lamTime++
-				// TODO: Format client name properly
-				Log(fmt.Sprintf("Client \"%s\" has requested access to the critical section and has been put in the back of the queue", "Bob"))
-				queueMutex.Unlock()
-
-				fmt.Println(nodeID)
-			}
+		reply := criticalpackage.Reply{
+			Access: true,
 		}
 
-	}()
+		streams := s.channel[request.NodeId]
 
+		for _, reqestChan := range streams {
+			reqestChan <- &reply
+		}
+
+		// looking for requests in all streams
+
+		//reads request from all channels (if there is one...
+		// sending reply requesting node.
+
+		nodeId, err := requestStream.Recv()
+
+		// critical section not availa
+		// logic
+		fmt.Println("test")
+
+		fmt.Println(err)
+		fmt.Println(nodeId)
+
+		queueMutex.Lock()
+
+		// convert nodeid int64 to int ???? or change protofile to int32, random ID generator thus need to be changed
+		//queue = append(queue, nodeId)
+		lamTime++
+		// TODO: Format client name properly
+		Log(fmt.Sprintf("Client \"%s\" has requested access to the critical section and has been put in the back of the queue", "Bob"))
+		queueMutex.Unlock()
+
+		fmt.Println(nodeID)
+	}()
+	return nil
 }
 
 // Run in own goroutine.
@@ -105,6 +111,7 @@ func (s *Server) serveQueue() {
 }
 
 func main() {
+
 	fmt.Println("=== Server starting up ===")
 	list, err := net.Listen("tcp", ":9080")
 
@@ -128,7 +135,8 @@ func main() {
 	grpcServer := grpc.NewServer(options...)
 
 	criticalpackage.RegisterCommunicationServer(grpcServer, &Server{
-		channel: make(map[string][]chan *criticalpackage.Reply),
+		channel: make(map[int64][]chan *criticalpackage.Reply),
 	})
 	grpcServer.Serve(list)
+
 }

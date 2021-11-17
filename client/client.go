@@ -145,7 +145,7 @@ func serverReply(client criticalpackage.CommunicationClient, ctx context.Context
 //The request is simply its ID. The ID should be received by the server and put in the queue
 //of clients waiting for critical section access.
 func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient, nodeID int64) {
-
+	fmt.Println("sending request")
 	//Stream for sending requests to server
 	stream, err := client.SendRequest(ctx)
 
