@@ -39,13 +39,18 @@ func RequestAccess(s *Server, requestStream criticalpackage.Communication_SendRe
 			// creating reply
 			reply := criticalpackage.Reply{
 				Access: true,
+				// nodeID
 			}
 			//reads request from all channels (if there is one...)
 			for _, replyChan := range streams {
-				// sending reply to node requesting node.
-				replyChan <- &reply
+				// sending reply requesting node.
 
 				nodeId, err := requestStream.Recv()
+
+				// critical section not availa
+				// logic
+
+				replyChan <- &reply
 
 				fmt.Println(err)
 				fmt.Println(nodeId)
