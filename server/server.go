@@ -33,7 +33,7 @@ func Log(text string) {
 	log.Printf("Lamport Time %d %s", lamTime, text)
 }
 
-// server reads reads node request and grant acces or put into queue
+//Server reads node request and grant acces or put into queue
 func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendRequestServer) error {
 	request, err := requestStream.Recv()
 	if err != nil {
@@ -53,9 +53,9 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 	go func() {
 		for {
 			if queue[0] == nodeID {
-				lamTime++
-				// Some client is in critical section, if code is in his block.
 
+				// Some client is in critical section, if code is in this block.
+				lamTime++
 				authchannel <- nil
 
 				Log(fmt.Sprintf("Client \"%v\" has entered the critical section", nodeID))
@@ -87,8 +87,9 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 func (s *Server) serveQueue() {
 	for {
 		if len(queue) > 0 {
+
+			// Some client is in critical section, if code is in this block.
 			lamTime++
-			// Some client is in critical section, if code is in his block.
 
 			id := queue[0]
 			s.channel[id][0] <- nil
@@ -112,6 +113,7 @@ func main() {
 	fmt.Println("=== Server starting up ===")
 	list, err := net.Listen("tcp", ":9080")
 
+	//Logging
 	LOG_FILE := "./server.log"
 
 	logFile, err := os.OpenFile(LOG_FILE, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)

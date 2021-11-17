@@ -48,11 +48,11 @@ func main() {
 	//Makes communication possible from client
 	client := criticalpackage.NewCommunicationClient(conn)
 
-	//Every x seconds (at a random interval) a client should try to access the critical section
+	//Every 5 seconds a client should try to access the critical section
 	//Requests are sent here
 	for {
-		fmt.Println("im alive")
 		time.Sleep(time.Second * 5)
+		log.Println("Sending request for critical access")
 		sendRequest(ctx, client, nodeID) //Fix ID sent with message
 	}
 
@@ -62,7 +62,7 @@ func main() {
 //The request is simply its ID. The ID should be received by the server and put in the queue
 //of clients waiting for critical section access.
 func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient, nodeID int64) {
-	fmt.Println("sending request")
+
 	//Stream for sending requests to server
 	stream, err := client.SendRequest(ctx)
 
@@ -75,7 +75,6 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 		NodeId: nodeID, //Should be a pointer to the id?
 	}
 
-	fmt.Println(request.NodeId, "test")
 	//Send the request to the server
 	stream.Send(&request)
 
@@ -83,18 +82,17 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	if err != nil {
 		log.Fatalf("Cant read")
 	}
-	fmt.Println(acc.Status)
 
 	if acc.Status == "Granted" {
 		nodeHasAccess = true
 
-		fmt.Println("Entering critical section")
+		log.Println("Entering critical section")
 		// Simulate doing stuff with critical access
 		time.Sleep(5 * time.Second)
-		fmt.Println("Exiting critical section")
+		log.Println("Exiting critical section")
 
 		nodeHasAccess = false
 	} else {
-		fmt.Printf("Denied access to critical section. Status recieved: %s", acc.Status)
+		log.Printf("Denied access to critical section. Status recieved: %s", acc.Status)
 	}
 }
