@@ -21,6 +21,9 @@ var tcpServer = flag.String("server", ":9080", "TCP Server")
 var idGenerator, _ = rand.Int(rand.Reader, big.NewInt(10000000))
 var nodeID = idGenerator.Int64()
 
+var prevValue = int64(0)
+var incValue = int64(0)
+
 //Global variable to see if client/node has access to critical section
 var nodeHasAccess = false
 
@@ -53,7 +56,18 @@ func main() {
 	for {
 		time.Sleep(time.Second * 5)
 		log.Println("Sending request for critical access")
-		sendRequest(ctx, client, nodeID) //Fix ID sent with message
+		var valGen, _ = rand.Int(rand.Reader, big.NewInt(100))
+		incValue = valGen.Int64()
+
+		fmt.Printf("Prev val = %v, inc val = %v \n", prevValue, incValue)
+
+		if prevValue < incValue {
+			sendRequest(ctx, client, nodeID, incValue) //Fix ID sent with message
+			prevValue = incValue
+		} else {
+			incValue = 0
+			sendRequest(ctx, client, nodeID, incValue) //Fix ID sent with message
+		}
 	}
 
 }
@@ -61,7 +75,7 @@ func main() {
 //This function sends a request to the server, to grant access to the critical section.
 //The request is simply its ID. The ID should be received by the server and put in the queue
 //of clients waiting for critical section access.
-func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient, nodeID int64) {
+func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient, nodeID int64, val int64) {
 
 	//Stream for sending requests to server
 	stream, err := client.SendRequest(ctx)
@@ -73,6 +87,7 @@ func sendRequest(ctx context.Context, client criticalpackage.CommunicationClient
 	//The request is only the clients ID.
 	request := criticalpackage.Request{
 		NodeId: nodeID, //Should be a pointer to the id?
+		Val:    incValue,
 	}
 
 	//Send the request to the server
