@@ -24,6 +24,8 @@ var nodeID = idGenerator.Int64()
 var prevValue = int64(0)
 var incValue = int64(0)
 
+var executionCount = int64(1)
+
 //Global variable to see if client/node has access to critical section
 var nodeHasAccess = false
 
@@ -57,7 +59,7 @@ func main() {
 		time.Sleep(time.Second * 5)
 		log.Println("Sending request for critical access")
 		var valGen, _ = rand.Int(rand.Reader, big.NewInt(100))
-		incValue = valGen.Int64()
+		incValue = valGen.Int64() + 3*executionCount
 
 		fmt.Printf("Prev val = %v, inc val = %v \n", prevValue, incValue)
 
@@ -68,6 +70,7 @@ func main() {
 			incValue = 0
 			sendRequest(ctx, client, nodeID, incValue) //Fix ID sent with message
 		}
+		executionCount++
 	}
 
 }
