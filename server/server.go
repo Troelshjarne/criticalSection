@@ -15,6 +15,7 @@ import (
 )
 
 var lamTime = 0
+var critVal = 0
 
 // Queue of clients
 var queue []int64
@@ -40,6 +41,7 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 		log.Printf("Request error: %v \n", err)
 	}
 	nodeID := request.NodeId
+	incVal := request.Val
 
 	authchannel := make(chan *criticalpackage.Reply)
 
@@ -65,8 +67,13 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 
 				queueMutex.Lock()
 				lamTime++
+
+				critVal += int(incVal)
+
 				queue = queue[1:]
 				Log(fmt.Sprintf("Client \"%v\" has exited the critical section", nodeID))
+				Log(fmt.Sprintf("\nThe critical value is now: %v \n", critVal))
+
 				queueMutex.Unlock()
 				break
 			} else {
