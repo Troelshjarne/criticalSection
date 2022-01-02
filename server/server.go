@@ -43,6 +43,7 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 	nodeID := request.NodeId
 	incVal := request.Val
 
+	//What are we using this for?
 	authchannel := make(chan *criticalpackage.Reply)
 
 	queueMutex.Lock()
@@ -58,6 +59,8 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 
 				// Some client is in critical section, if code is in this block.
 				lamTime++
+
+				//What are we using this for?
 				authchannel <- nil
 
 				Log(fmt.Sprintf("Client \"%v\" has entered the critical section", nodeID))
@@ -82,6 +85,7 @@ func (s *Server) SendRequest(requestStream criticalpackage.Communication_SendReq
 		}
 	}()
 
+	//What are we using this for?
 	<-authchannel
 
 	requestStream.SendAndClose(&criticalpackage.Ack{Status: "Granted"})
